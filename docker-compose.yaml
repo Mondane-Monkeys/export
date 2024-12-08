@@ -5,7 +5,7 @@ services:
       - 8089:80
       - 80:80
     volumes:
-      - ./configs/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx-configs/nginx.conf:/etc/nginx/nginx.conf
     depends_on:
       - accounts_mongo
       - accounts
@@ -30,8 +30,7 @@ services:
     volumes:
       - accounts_mongo_data:/data/db 
   accounts:
-    image: conciergeapp/concierge:accounts
-    build: .
+    image: mondanemonkeys/concierge-accounts:latest
     ports:
       - 50001:8080
     depends_on:
@@ -41,8 +40,7 @@ services:
     env_file: 
       - .env.prod
   amenities:
-    image: conciergeapp/concierge:amenities
-    build: .
+    image: mondanemonkeys/concierge-amenities:latest
     ports:
       - 50004:8080
     environment:
@@ -68,7 +66,7 @@ services:
       timeout: 5s
       retries: 10
     volumes:
-      - ./configs:/docker-entrypoint-initdb.d
+      - ./amen-configs:/docker-entrypoint-initdb.d
       - amenities_db:/var/lib/postgresql/data
   mongo_incident_reports_prod:
     image: mongo:4.4.18
@@ -85,8 +83,7 @@ services:
       retries: 3
 
   incident_reports:
-    image: conciergeapp/concierge:incident_reports
-    build: .
+    image: mondanemonkeys/concierge-incidents:latest
     ports:
       - 50005:8080
     depends_on:
@@ -99,18 +96,15 @@ services:
       - DB_USERNAME=mongo_db_user 
       - DB_PASSWORD=password
   guest_webapp:
-    build: .
     ports:
       - "8081:80"
-    image: conciergeapp/concierge:guest_webapp
+    image: mondanemonkeys/concierge-guest:latest
   staff_webapp:
-    build: .
     ports:
       - 8082:80
-    image: conciergeapp/concierge:staff_webapp
+    image: mondanemonkeys/concierge-staff:latest
   task_system:
-    image: conciergeapp/concierge:task_system
-    build: .
+    image: mondanemonkeys/concierge-tasks:latest
     ports:
       - 50006:8080
     environment:
@@ -139,11 +133,10 @@ services:
       timeout: 5s
       retries: 10
     volumes:
-      - ./configs:/docker-entrypoint-initdb.d
+      - ./task-config:/docker-entrypoint-initdb.d
       - task_system_postgres:/var/lib/postgresql/data
   permissions:
-    image: conciergeapp/concierge:permissions
-    build: .
+    image: mondanemonkeys/concierge-permissions:latest
     ports:
       - 50003:8080
     environment:
@@ -165,7 +158,7 @@ services:
       MARIADB_ROOT_PASSWORD: default
     volumes:
       - permissions_db:/var/lib/mysql:Z
-      - ./internal/config/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./permission-config/init.sql:/docker-entrypoint-initdb.d/init.sql
 volumes:
   permissions_db:
     driver: local
