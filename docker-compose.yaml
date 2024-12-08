@@ -23,6 +23,7 @@ services:
     image: containrrr/watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 30
   accounts_mongo:
     image: mongo:4.4.18
     container_name: accounts_mongo
