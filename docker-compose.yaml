@@ -1,0 +1,179 @@
+services:
+  nginx:
+    image: nginx:stable-alpine-slim
+    ports:
+      - 8089:80
+      - 80:80
+    volumes:
+      - ./configs/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - accounts_mongo
+      - accounts
+      - amenities
+      - amenities-postgres
+      - guest_webapp
+      - mongo_incident_reports_prod
+      - incident_reports
+      - permissions
+      - permissions-db
+      - staff_webapp
+      - task_system
+      - task_system_postgres
+  accounts_mongo:
+    image: mongo:4.4.18
+    container_name: accounts_mongo
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - accounts_mongo_data:/data/db 
+  accounts:
+    image: conciergeapp/concierge:accounts
+    build: .
+    ports:
+      - 50001:8080
+    depends_on:
+      - accounts_mongo
+    environment:
+      - SESSIONS_ENDPOINT=http://permissions:8080
+    env_file: 
+      - .env.prod
+  amenities:
+    image: conciergeapp/concierge:amenities
+    build: .
+    ports:
+      - 50004:8080
+    environment:
+      - PERMISSIONS_ENDPOINT=http://permissions:8080
+      - SESSIONS_ENDPOINT=http://permissions:8080
+      - DB_IMPLEMENTATION=POSTGRES
+      - DB_HOST=amenities-postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=sa
+  amenities-postgres:
+    image: postgres:latest
+    container_name: amenities-postgres-container
+    ports:
+      - 50014:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - PGUSER=postgres
+      - POSTGRES_PASSWORD=sa
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - ./configs:/docker-entrypoint-initdb.d
+      - amenities_db:/var/lib/postgresql/data
+  mongo_incident_reports_prod:
+    image: mongo:4.4.18
+    container_name: mongo_incident_reports_prod
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongo_db_user
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - incidents_mongo_data:/data/db 
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  incident_reports:
+    image: conciergeapp/concierge:incident_reports
+    build: .
+    ports:
+      - 50005:8080
+    depends_on:
+      - mongo_incident_reports_prod
+    environment:
+      - SESSIONS_ENDPOINT=http://permissions:8080
+      - DB_IMPLEMENTATION=MONGODB 
+      - DB_HOST=mongo_incident_reports_prod
+      - DB_PORT=27017
+      - DB_USERNAME=mongo_db_user 
+      - DB_PASSWORD=password
+  guest_webapp:
+    build: .
+    ports:
+      - "8081:80"
+    image: conciergeapp/concierge:guest_webapp
+  staff_webapp:
+    build: .
+    ports:
+      - 8082:80
+    image: conciergeapp/concierge:staff_webapp
+  task_system:
+    image: conciergeapp/concierge:task_system
+    build: .
+    ports:
+      - 50006:8080
+    environment:
+      - PERMISSIONS_IMPLEMENTATION=INTEGRATED
+      - PERMISSIONS_ENDPOINT=http://permissions:8080
+      - SESSIONS_ENDPOINT=http://permissions:8080
+      - DB_IMPLEMENTATION=POSTGRES
+      - DB_HOST=task_system_postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=sa
+    depends_on:
+      - task_system_postgres
+  task_system_postgres:
+    image: postgres:latest
+    container_name: task_system_postgres
+    ports:
+      - 50016:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - PGUSER=postgres
+      - POSTGRES_PASSWORD=sa
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - ./configs:/docker-entrypoint-initdb.d
+      - task_system_postgres:/var/lib/postgresql/data
+  permissions:
+    image: conciergeapp/concierge:permissions
+    build: .
+    ports:
+      - 50003:8080
+    environment:
+      PERMISSION_DB_IMPLEMENTATION: MARIADB
+      PERMISSION_DB_USERNAME: root
+      PERMISSION_DB_PASSWORD: default
+      PERMISSION_DB_HOST: permissions-db
+      PERMISSION_DB_PORT: 3306
+      PERMISSION_DB_NAME: permissions_db
+      ACCOUNT_ENDPOINT: http://accounts:8080
+    depends_on:
+      - permissions-db
+  permissions-db:
+    image: mariadb:11.6.1-ubi9-rc
+    ports:
+      - 3306:3306
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: default
+    volumes:
+      - permissions_db:/var/lib/mysql:Z
+      - ./internal/config/init.sql:/docker-entrypoint-initdb.d/init.sql
+volumes:
+  permissions_db:
+    driver: local
+  task_system_postgres:
+    driver: local
+  incidents_mongo_data:
+    driver: local 
+  amenities_db:
+    driver: local
+  accounts_mongo_data:
+    driver: local
