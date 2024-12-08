@@ -19,6 +19,10 @@ services:
       - staff_webapp
       - task_system
       - task_system_postgres
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
   accounts_mongo:
     image: mongo:4.4.18
     container_name: accounts_mongo
