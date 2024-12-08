@@ -1,6 +1,7 @@
 services:
   nginx:
     image: nginx:stable-alpine-slim
+    restart: always
     ports:
       - 8089:80
       - 80:80
@@ -21,11 +22,13 @@ services:
       - task_system_postgres
   watchtower:
     image: containrrr/watchtower
+    restart: always
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --interval 30
   accounts_mongo:
     image: mongo:4.4.18
+    restart: always
     container_name: accounts_mongo
     healthcheck:
       test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
@@ -36,6 +39,7 @@ services:
       - accounts_mongo_data:/data/db 
   accounts:
     image: mondanemonkeys/concierge-accounts:latest
+    restart: always
     ports:
       - 50001:8080
     depends_on:
@@ -46,6 +50,7 @@ services:
       - .env.prod
   amenities:
     image: mondanemonkeys/concierge-amenities:latest
+    restart: always
     ports:
       - 50004:8080
     environment:
@@ -58,6 +63,7 @@ services:
       - DB_PASSWORD=sa
   amenities-postgres:
     image: postgres:latest
+    restart: always
     container_name: amenities-postgres-container
     ports:
       - 50014:5432
@@ -75,6 +81,7 @@ services:
       - amenities_db:/var/lib/postgresql/data
   mongo_incident_reports_prod:
     image: mongo:4.4.18
+    restart: always
     container_name: mongo_incident_reports_prod
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongo_db_user
@@ -89,6 +96,7 @@ services:
 
   incident_reports:
     image: mondanemonkeys/concierge-incidents:latest
+    restart: always
     ports:
       - 50005:8080
     depends_on:
@@ -104,12 +112,15 @@ services:
     ports:
       - "8081:80"
     image: mondanemonkeys/concierge-guest:latest
+    restart: always
   staff_webapp:
     ports:
       - 8082:80
     image: mondanemonkeys/concierge-staff:latest
+    restart: always
   task_system:
     image: mondanemonkeys/concierge-tasks:latest
+    restart: always
     ports:
       - 50006:8080
     environment:
@@ -125,6 +136,7 @@ services:
       - task_system_postgres
   task_system_postgres:
     image: postgres:latest
+    restart: always
     container_name: task_system_postgres
     ports:
       - 50016:5432
@@ -142,6 +154,7 @@ services:
       - task_system_postgres:/var/lib/postgresql/data
   permissions:
     image: mondanemonkeys/concierge-permissions:latest
+    restart: always
     ports:
       - 50003:8080
     environment:
