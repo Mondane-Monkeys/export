@@ -38,7 +38,7 @@ services:
     volumes:
       - accounts_mongo_data:/data/db 
   accounts:
-    image: mondanemonkeys/concierge-accounts:latest
+    image: conciergeapp/concierge:accounts
     restart: always
     ports:
       - 50001:8080
@@ -49,7 +49,7 @@ services:
     env_file: 
       - .env.prod
   amenities:
-    image: mondanemonkeys/concierge-amenities:latest
+    image: conciergeapp/concierge:amenities
     restart: always
     ports:
       - 50004:8080
@@ -95,7 +95,7 @@ services:
       retries: 3
 
   incident_reports:
-    image: mondanemonkeys/concierge-incidents:latest
+    image: conciergeapp/concierge:incident_reports
     restart: always
     ports:
       - 50005:8080
@@ -111,15 +111,15 @@ services:
   guest_webapp:
     ports:
       - "8081:80"
-    image: mondanemonkeys/concierge-guest:latest
+    image: conciergeapp/concierge:guest_webapp
     restart: always
   staff_webapp:
     ports:
       - 8082:80
-    image: mondanemonkeys/concierge-staff:latest
+    image: conciergeapp/concierge:staff_webapp
     restart: always
   task_system:
-    image: mondanemonkeys/concierge-tasks:latest
+    image: conciergeapp/concierge:task_system
     restart: always
     ports:
       - 50006:8080
@@ -153,7 +153,7 @@ services:
       - ./task-config:/docker-entrypoint-initdb.d
       - task_system_postgres:/var/lib/postgresql/data
   permissions:
-    image: mondanemonkeys/concierge-permissions:latest
+    image: conciergeapp/concierge:permissions
     restart: always
     ports:
       - 50003:8080
