@@ -1,0 +1,20 @@
+name: Delay Example
+
+on:
+  push:
+    branches:
+      - main  # Trigger when a commit is pushed to the 'main' branch
+
+jobs:
+  delay-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v3
+
+      - name: Sleep for 15 seconds
+        run: |
+          echo "Starting the 15-second delay..."
+          sleep 15  # Sleep for 15 seconds
+          echo "Completed the 15-second delay."
